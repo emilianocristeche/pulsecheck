@@ -1,0 +1,150 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0f1117;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #1e2535;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+header h1 { font-size: 1.4rem; font-weight: 700; color: #fff; }
+header span { font-size: 0.85rem; color: #64748b; }
+
+.pulse-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+.add-form {
+  background: #161b27;
+  border: 1px solid #1e2535;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.add-form h2 { font-size: 0.9rem; color: #94a3b8; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+.form-row input {
+  background: #0f1117;
+  border: 1px solid #1e2535;
+  border-radius: 6px;
+  color: #e2e8f0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.form-row input:focus { border-color: #3b82f6; }
+.form-row input[name="name"] { flex: 1; min-width: 120px; }
+.form-row input[name="url"] { flex: 3; min-width: 200px; }
+.form-row input[name="expected_status"], .form-row input[name="interval_seconds"] { width: 90px; }
+
+button.primary {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+button.primary:hover { background: #2563eb; }
+button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1rem; }
+
+.card {
+  background: #161b27;
+  border: 1px solid #1e2535;
+  border-radius: 10px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.card:hover { border-color: #3b82f6; }
+.card.selected { border-color: #3b82f6; }
+.card.up { border-left: 3px solid #22c55e; }
+.card.down { border-left: 3px solid #ef4444; }
+.card.unknown { border-left: 3px solid #64748b; }
+
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+.card-header .name { font-weight: 600; font-size: 0.95rem; }
+.card-header .badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.badge.up { background: #14532d; color: #22c55e; }
+.badge.down { background: #450a0a; color: #ef4444; }
+.badge.unknown { background: #1e2535; color: #64748b; }
+
+.card-url { font-size: 0.78rem; color: #64748b; margin-bottom: 0.75rem; word-break: break-all; }
+
+.card-stats { display: flex; gap: 1.5rem; }
+.stat label { display: block; font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem; }
+.stat value { font-size: 1rem; font-weight: 600; }
+
+.card-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+
+button.ghost {
+  background: none;
+  border: 1px solid #1e2535;
+  color: #94a3b8;
+  border-radius: 5px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+button.ghost:hover { border-color: #3b82f6; color: #3b82f6; }
+button.ghost.danger:hover { border-color: #ef4444; color: #ef4444; }
+
+.detail {
+  background: #161b27;
+  border: 1px solid #1e2535;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.detail h3 { font-size: 1rem; margin-bottom: 1rem; color: #94a3b8; }
+
+.chart-wrap { width: 100%; height: 180px; margin-bottom: 1.5rem; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+th { text-align: left; color: #64748b; font-weight: 600; padding: 0.4rem 0.6rem; border-bottom: 1px solid #1e2535; }
+td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #0f1117; }
+tr:hover td { background: #0f1117; }
+
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.dot.up { background: #22c55e; }
+.dot.down { background: #ef4444; }
+
+.empty { text-align: center; color: #64748b; padding: 3rem 0; }
+
+.error-msg { font-size: 0.75rem; color: #ef4444; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
