@@ -5,6 +5,7 @@ from models import Endpoint, CheckResult
 from alerts import send_alert
 from datetime import datetime, timezone
 from netguard import BlockedURL, fetch
+from schemas import MAX_INTERVAL_SECONDS, MIN_INTERVAL_SECONDS
 import logging
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,22 @@ def check_endpoint(endpoint_id: int):
         db.close()
 
 
+def schedule_endpoint(endpoint_id: int, interval_seconds: int):
+    """(Re)schedule periodic checks for one endpoint.
+
+    The interval is clamped to the allowed range so rows saved before the API
+    validated it (e.g. 0 or negative) can't hammer the target.
+    """
+    seconds = min(max(interval_seconds or 0, MIN_INTERVAL_SECONDS), MAX_INTERVAL_SECONDS)
+    scheduler.add_job(
+        check_endpoint,
+        trigger=IntervalTrigger(seconds=seconds),
+        id=str(endpoint_id),
+        args=[endpoint_id],
+        replace_existing=True,
+    )
+
+
 def sync_jobs():
     """Reconcile scheduler jobs with active endpoints in DB."""
     db = SessionLocal()
@@ -68,14 +85,8 @@ def sync_jobs():
         existing_ids = {int(j.id) for j in scheduler.get_jobs() if j.id.isdigit()}
 
         for eid in active_ids - existing_ids:
-            ep = db.query(Endpoint).get(eid)
-            scheduler.add_job(
-                check_endpoint,
-                trigger=IntervalTrigger(seconds=ep.interval_seconds),
-                id=str(eid),
-                args=[eid],
-                replace_existing=True,
-            )
+            ep = db.get(Endpoint, eid)
+            schedule_endpoint(eid, ep.interval_seconds)
 
         for eid in existing_ids - active_ids:
             try:

@@ -3,10 +3,9 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Endpoint
 from schemas import EndpointCreate, EndpointRead
-from scheduler import scheduler, check_endpoint
+from scheduler import scheduler, check_endpoint, schedule_endpoint
 from netguard import BlockedURL, resolve_and_validate
 import requests
-from apscheduler.triggers.interval import IntervalTrigger
 from typing import List
 import threading
 
@@ -35,13 +34,7 @@ def create_endpoint(data: EndpointCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(ep)
 
-    scheduler.add_job(
-        check_endpoint,
-        trigger=IntervalTrigger(seconds=ep.interval_seconds),
-        id=str(ep.id),
-        args=[ep.id],
-        replace_existing=True,
-    )
+    schedule_endpoint(ep.id, ep.interval_seconds)
     # First check runs immediately in background so the UI shows status fast
     threading.Thread(target=check_endpoint, args=(ep.id,), daemon=True).start()
     return ep
@@ -70,13 +63,7 @@ def toggle_endpoint(endpoint_id: int, db: Session = Depends(get_db)):
     db.refresh(ep)
 
     if ep.is_active:
-        scheduler.add_job(
-            check_endpoint,
-            trigger=IntervalTrigger(seconds=ep.interval_seconds),
-            id=str(ep.id),
-            args=[ep.id],
-            replace_existing=True,
-        )
+        schedule_endpoint(ep.id, ep.interval_seconds)
     else:
         try:
             scheduler.remove_job(str(ep.id))

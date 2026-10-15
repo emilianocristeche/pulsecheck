@@ -4,5 +4,15 @@ services:
     ports:
       - "8000:8000"
     env_file: .env
+    environment:
+      # Overrides DATABASE_URL from .env so the DB lands in the mounted volume
+      # (the .env default, sqlite:///./pulsecheck.db, is outside it).
+      DATABASE_URL: sqlite:////app/data/pulsecheck.db
     volumes:
-      - ./data:/app/data
+      # Named volume: Docker initializes it from the image's /app/data, so it
+      # is owned by the non-root app user (a ./data bind mount would be
+      # created as root and not writable).
+      - pulsecheck-data:/app/data
+
+volumes:
+  pulsecheck-data:

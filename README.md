@@ -80,6 +80,10 @@ redirect hop:
 5. Proxy environment variables are ignored, so the connection really goes to
    the pinned IP.
 
+Check intervals must be between 10 seconds and 1 day (`422` otherwise);
+endpoints stored before that rule existed are scheduled with their interval
+clamped into the same range.
+
 Adding an endpoint whose URL is already disallowed returns `422`. Because DNS
 can change later, the scheduler re-validates on every check, and a blocked
 check is recorded as down with `error_msg` starting with `blocked:`.
@@ -99,6 +103,11 @@ cd backend
 pip install -r requirements-dev.txt
 pytest -q
 ```
+
+CI (`.github/workflows/ci.yml`) runs these tests on Python 3.12 (same as the
+Dockerfile) with the pinned requirements, and also brings the stack up with
+`docker compose` to check the non-root user and that data persists across a
+restart.
 
 The SSRF tests run against a local HTTP server: blocked ranges, redirects to
 internal addresses, redirect loops, proxy env vars, and a DNS answer that
@@ -130,6 +139,11 @@ changes between lookups (the request must stay on the first, validated IP).
 cp .env.example .env
 docker compose up
 ```
+
+The container runs as an unprivileged user (`app`, uid 10001). The SQLite
+database is stored at `/app/data/pulsecheck.db` inside the `pulsecheck-data`
+named volume, so it survives `docker compose down` / `up` (only
+`docker compose down -v` deletes it).
 
 ---
 
