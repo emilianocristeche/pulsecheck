@@ -4,6 +4,8 @@ from database import get_db
 from models import Endpoint
 from schemas import EndpointCreate, EndpointRead
 from scheduler import scheduler, check_endpoint
+from netguard import BlockedURL, resolve_and_validate
+import requests
 from apscheduler.triggers.interval import IntervalTrigger
 from typing import List
 import threading
@@ -18,6 +20,16 @@ def list_endpoints(db: Session = Depends(get_db)):
 
 @router.post("/", response_model=EndpointRead, status_code=201)
 def create_endpoint(data: EndpointCreate, db: Session = Depends(get_db)):
+    # Fail fast on targets that would be refused at check time anyway. A name
+    # that does not resolve yet is accepted (it will just show as down); the
+    # scheduler re-validates on every check, since DNS can change later.
+    try:
+        resolve_and_validate(data.url)
+    except BlockedURL as e:
+        raise HTTPException(422, f"URL not allowed: {e}")
+    except requests.ConnectionError:
+        pass
+
     ep = Endpoint(**data.model_dump())
     db.add(ep)
     db.commit()

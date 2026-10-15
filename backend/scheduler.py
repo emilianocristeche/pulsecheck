@@ -4,7 +4,7 @@ from database import SessionLocal
 from models import Endpoint, CheckResult
 from alerts import send_alert
 from datetime import datetime, timezone
-import requests
+from netguard import BlockedURL, fetch
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,10 +26,13 @@ def check_endpoint(endpoint_id: int):
         error_msg = None
 
         try:
-            resp = requests.get(endpoint.url, timeout=10)
-            status_code = resp.status_code
-            response_time_ms = resp.elapsed.total_seconds() * 1000
+            # SSRF-safe GET: public IPs only, DNS pinned, each redirect re-validated.
+            result = fetch(endpoint.url, timeout=10)
+            status_code = result.status_code
+            response_time_ms = result.elapsed_ms
             is_up = status_code == endpoint.expected_status
+        except BlockedURL as e:
+            error_msg = f"blocked: {e}"[:200]
         except Exception as e:
             error_msg = str(e)[:200]
 
