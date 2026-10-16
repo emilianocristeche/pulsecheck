@@ -1,9 +1,21 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-from database import init_db
-from scheduler import start_scheduler, stop_scheduler
-from routers import endpoints, checks
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env before importing modules that read env vars at import time
+# (database.py, alerts.py): backend/.env first, then the repo-root .env.
+# Neither overrides variables already set in the real environment.
+_BACKEND_DIR = Path(__file__).resolve().parent
+load_dotenv(_BACKEND_DIR / ".env")
+load_dotenv(_BACKEND_DIR.parent / ".env")
+
+import os  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from contextlib import asynccontextmanager  # noqa: E402
+from database import init_db  # noqa: E402
+from scheduler import start_scheduler, stop_scheduler  # noqa: E402
+from routers import endpoints, checks  # noqa: E402
 
 
 @asynccontextmanager
@@ -18,7 +30,8 @@ app = FastAPI(title="PulseCheck", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ponytail: lock to VITE_API_URL in prod via env
+    # Comma-separated list, e.g. CORS_ORIGINS=https://your-dashboard.vercel.app
+    allow_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")],
     allow_methods=["*"],
     allow_headers=["*"],
 )

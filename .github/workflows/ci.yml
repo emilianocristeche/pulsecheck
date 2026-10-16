@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"   # same as backend/Dockerfile
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q
+
+  docker:
+    # Builds the real image with docker compose and checks: non-root user,
+    # DB inside the mounted volume, data surviving a restart.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: docker compose up -d --build
+      - name: Wait for /health
+        run: |
+          for i in $(seq 1 30); do curl -fs localhost:8000/health && exit 0; sleep 1; done
+          docker compose logs; exit 1
+      - name: Container does not run as root
+        run: test "$(docker compose exec -T backend id -u)" != "0"
+      - name: Data persists across restarts
+        run: |
+          curl -fs -X POST localhost:8000/api/endpoints/ -H 'Content-Type: application/json' \
+            -d '{"name":"ci","url":"https://8.8.8.8/","interval_seconds":60}'
+          docker compose exec -T backend ls -l /app/data/pulsecheck.db
+          docker compose down          # no -v: the volume is kept
+          docker compose up -d
+          for i in $(seq 1 30); do curl -fs localhost:8000/health && break; sleep 1; done
+          curl -fs localhost:8000/api/endpoints/ | grep -q '"name":"ci"'
+      - if: always()
+        run: docker compose down -v

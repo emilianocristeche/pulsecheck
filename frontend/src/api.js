@@ -5,7 +5,12 @@ async function req(path, opts = {}) {
     headers: { 'Content-Type': 'application/json' },
     ...opts,
   })
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+  if (!res.ok) {
+    // Surface the API's reason (e.g. "URL not allowed: ... non-public address").
+    const body = await res.json().catch(() => null)
+    const detail = typeof body?.detail === 'string' ? `: ${body.detail}` : ''
+    throw new Error(`${res.status} ${res.statusText}${detail}`)
+  }
   if (res.status === 204) return null
   return res.json()
 }
